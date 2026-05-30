@@ -58,6 +58,9 @@ func main() {
 	)
 
 	http.Handle("/api/github/hook", dispatcher)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://cuddles.rs", http.StatusSeeOther)
+	})
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Info().Str("addr", addr).Msg("starting noai-bot")
