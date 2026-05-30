@@ -1,0 +1,61 @@
+name: docker
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@78961f6f84d799cd858575bb931c3e51d3b13290
+      - uses: actions/setup-go@900f2210b1d28bbbd0bd22d17926b9e224e8f231
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test ./...
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@78961f6f84d799cd858575bb931c3e51d3b13290
+
+      - uses: docker/metadata-action@3caf19fbe3db1a1a6a8bdce189e09ac0ed35d513
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-,format=short
+
+      - uses: docker/login-action@3999a1f4362c53e6a6048cde50f69868af81da5c
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@22b48a429f10e1de233237b5c534c9c3d2e41597
+
+      - uses: docker/build-push-action@1d0c110a5d679453d30b396aa86f6bb6ae377b76
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

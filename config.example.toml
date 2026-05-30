@@ -1,0 +1,17 @@
+[server]
+port = 8080
+
+[github]
+app_id = 123456
+private_key_path = "private-key.pem"
+webhook_secret = "your-webhook-secret-here"
+
+# optional: extend the built-in AI list
+extra_patterns = [
+  "some-internal-ai-tool",
+]
+
+# optional: override decline message
+# decline_message = """
+# your custom message
+# """
