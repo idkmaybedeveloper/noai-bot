@@ -6,6 +6,7 @@ COPY . .
 RUN GOEXPERIMENT=boringcrypto,greenteagc,randomizedheapbase64,simd CGO_ENABLED=0 go build -trimpath -o /noai .
 
 FROM scratch
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /noai /noai
 EXPOSE 8080
 ENTRYPOINT ["/noai"]
